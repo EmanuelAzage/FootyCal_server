@@ -49,9 +49,10 @@ app.post('/auth/token', (req, res) => {
 
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
   client.connect(function (err) {
-    const collection = client.db(mongo_db).collection("users");
-
+    console.log(err)
     if(err) throw err;
+
+    const collection = client.db(mongo_db).collection("users");
 
     var query = {'id':req.body.id};
 
