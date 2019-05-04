@@ -46,30 +46,31 @@ app.post('/auth/create_user',(req, res) =>{
 
 app.post('/auth/token', (req, res) => {
   //find user for id and compare password in mongo with password in request
-  console.log("mongo url: ", mongo_uri);
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
   client.connect(function (err) {
-    console.log(err);
-    if(err) throw err;
+    if(err) {
+      console.log('error on mongo connection: ', err);
+      res.status(500).send();
+    }
 
     const collection = client.db(mongo_db).collection("users");
 
     var query = {'id':req.body.id};
 
-    collection.findOne(query).then(function(doc) {
+    collection.findOne(query, function(err, doc) {
       if(!doc){ // couldn't find the user
         client.close();
-        res.status(401).end();
-      }
-
-      if(req.body.password === doc['password']){
-        client.close();
-        let token = jwt.sign({ password: req.body.password }, process.env.SECRET_KEY);
-        console.log('sent token');
-        res.json({ token });
-      } else {
-        client.close();
-        res.status(401).end();
+        res.status(404).send();
+      }else{
+        if(req.body.password === doc['password']){
+          client.close();
+          let token = jwt.sign({ password: req.body.password }, process.env.SECRET_KEY);
+          console.log('sent token');
+          res.status(200).json({ token });
+        } else {
+          client.close();
+          res.status(401).send();
+        }
       }
 
     });
