@@ -46,10 +46,10 @@ app.post('/auth/create_user',(req, res) =>{
 
 app.post('/auth/token', (req, res) => {
   //find user for id and compare password in mongo with password in request
-
+  console.log("mongo url: ", mongo_uri);
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
   client.connect(function (err) {
-    console.log(err)
+    console.log(err);
     if(err) throw err;
 
     const collection = client.db(mongo_db).collection("users");
