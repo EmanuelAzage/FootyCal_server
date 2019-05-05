@@ -22,7 +22,7 @@ it('should return status of 404 for a non existent user', (done) => {
 
 it('should return status of 200 and the upcoming matches for the user', (done) => {
     frisby
-      .get('http://localhost:8080/api/upcoming_matches/16')
+      .get('http://localhost:8080/api/upcoming_matches/15')
       .expect('status', 200)
       .expect('jsonTypes', '*', {
         id: Joi.number().integer(),

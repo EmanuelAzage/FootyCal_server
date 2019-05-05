@@ -22,7 +22,7 @@ it('should return status of 404 when the user is not found', (done) => {
 
 it('should return status of 200 and the user when it is found', (done) => {
     frisby
-      .get('http://localhost:8080/api/user/16')
+      .get('http://localhost:8080/api/user/15')
       .expect('status', 200)
       .expect('json', 'email', 'test@usc.edu')
       .done(done);
