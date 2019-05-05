@@ -5,3 +5,4 @@
 
 ## Database Schema
 
+![alt text](https://github.com/EmanuelAzage/blob/master/db_schema.jpg "Database Schema")
