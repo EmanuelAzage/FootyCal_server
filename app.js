@@ -16,6 +16,7 @@ const protect = require('./middleware/protect');
 app.use(bodyParser.json());
 app.use(cors());
 
+// creates a user on the mongo db given a users information
 app.post('/auth/create_user',(req, res) =>{
 
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
@@ -44,6 +45,7 @@ app.post('/auth/create_user',(req, res) =>{
   });
 });
 
+// returns an access token given a user
 app.post('/auth/token', (req, res) => {
   //find user for id and compare password in mongo with password in request
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
@@ -136,7 +138,7 @@ app.get('/api/user/:id', (req, res) => {
   });
 });
 
-//
+// replaces the teams monitered with the new teams passed in the request for the user
 app.patch('/api/update_user_teams', (req, res) => {
   var user_id = req.body.id;
   var teams = req.body.teams;
@@ -166,6 +168,7 @@ app.patch('/api/update_user_teams', (req, res) => {
 
 });
 
+// removes all monitered teams for the user
 app.delete('/api/delete_teams', (req, res) => {
   var user_id = req.body.id;
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
@@ -194,6 +197,7 @@ app.delete('/api/delete_teams', (req, res) => {
 
 });
 
+// returns the upcoming matches of the teams monitered by the user with the given id
 app.get('/api/upcoming_matches/:id', (req, res) => {
   var user_id = parseInt(req.params.id);
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
