@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -65,7 +65,7 @@ app.post('/auth/token', (req, res) => {
         if(req.body.password === doc['password']){
           client.close();
           let token = jwt.sign({ password: req.body.password }, process.env.SECRET_KEY);
-          console.log('sent token');
+          console.log('sent token: ', token);
           res.status(200).json({ token });
         } else {
           client.close();
@@ -79,27 +79,6 @@ app.post('/auth/token', (req, res) => {
 
 
 });
-
-app.get('/test', function(req, response){
-  // sample links
-  let linksArr = ['https://jsonplaceholder.typicode.com/posts', 'https://jsonplaceholder.typicode.com/comments'];
-  const config = {
-     headers: {'X-Auth-Token': process.env.FOOTBALL_DATA_KEY}
-   };
-  axios.all(linksArr.map(url => axios.get(url,config)))
-  .then(axios.spread(function (...res) {
-    // all requests are now complete
-    var data = [];
-    for(i in linksArr){
-      console.log(res[i]['data'].length);
-       data.push.apply(data, res[i]['data'])
-    }
-    console.log(data)
-
-    response.status(200).json(data);
-  }));
-});
-
 
 app.use(protect);
 
@@ -128,8 +107,10 @@ app.get('/api/allteams', (req, res) => {
 });
 
 // get single user resource
-app.get('/api/user', (req, res) => {
-  var user_id = req.body.id;
+app.get('/api/user/:id', (req, res) => {
+
+  var user_id = parseInt(req.params.id);
+
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
   client.connect(function (err) {
     const collection = client.db(mongo_db).collection("users");
@@ -139,8 +120,9 @@ app.get('/api/user', (req, res) => {
     var query = {'id': user_id};
 
     collection.findOne(query, function(err, doc) {
-      if(err){
+      if(err || !doc){
         console.log("err: ", err);
+        console.log("doc: ", doc)
         client.close();
         res.status(404).end();
       } else {
@@ -196,10 +178,10 @@ app.delete('/api/delete_teams', (req, res) => {
     var newval = {"$unset": {"teams": ""}};
 
     collection.findOneAndUpdate(query, newval, function(err, doc) {
-      if(err){
+      if(err || !doc){
         console.log('delete failed');
         client.close();
-        res.status(404).end();
+        res.status(404).send();
       }else{
         console.log('delete success');
         res.status(200).send();
@@ -212,8 +194,8 @@ app.delete('/api/delete_teams', (req, res) => {
 
 });
 
-app.get('/api/upcoming_matches', (req, res) => {
-  var user_id = req.body.id;
+app.get('/api/upcoming_matches/:id', (req, res) => {
+  var user_id = parseInt(req.params.id);
   const client = new MongoClient(mongo_uri, { useNewUrlParser: true });
   client.connect(function (err) {
     const collection = client.db(mongo_db).collection("users");
@@ -223,60 +205,61 @@ app.get('/api/upcoming_matches', (req, res) => {
     var query = {'id': user_id};
 
     collection.findOne(query, function(err, doc) {
-      if(err){
+      if(err || !doc){
         client.close();
-        res.status(401).end();
-      }
+        res.status(404).end();
+      } else {
 
-      // use list of teams to get all matches that are scheduled for each team
-      var teams = doc['teams'];
-      const config = {
-         headers: {'X-Auth-Token': process.env.FOOTBALL_DATA_KEY}
-       };
-      if (teams){
-        var linksArr = [];
-        for (i in teams){
-          linksArr.push(`https://api.football-data.org//v2/teams/${teams[i].id}/matches?status=SCHEDULED`);
-        }
-        axios.all(linksArr.map(url => axios.get(url,config)))
-        .then(axios.spread(function (...result) {
-          // all requests are now complete
-          var data = [];
-          for(i in result){
-            data.push.apply(data, result[i].data.matches);
+        // use list of teams to get all matches that are scheduled for each team
+        var teams = doc['teams'];
+        const config = {
+           headers: {'X-Auth-Token': process.env.FOOTBALL_DATA_KEY}
+         };
+        if (teams){
+          var linksArr = [];
+          for (i in teams){
+            linksArr.push(`https://api.football-data.org//v2/teams/${teams[i].id}/matches?status=SCHEDULED`);
           }
-
-          //Sort matches by date ascending
-          data.sort(function(a,b){
-            return new Date(a.utcDate) - new Date(b.utcDate);
-          });
-
-          var matches = [];
-          var matchIds = [];
-          for(i in data){
-            var datetime = new Date(data[i].utcDate);
-            var date = datetime.toISOString().split('T')[0];
-            var time = datetime.toISOString().split('T')[1];
-            time = time.split(':')[0] + ':' + time.split(':')[1];
-            var match = {
-              'id': data[i].id,
-              'date': date,
-              'time': time,
-              'home_team': data[i].homeTeam.name,
-              'away_team': data[i].awayTeam.name
-            };
-            if(matchIds.indexOf(match.id) < 0){ // avoid duplicates if user team has 2 teams that will play each other
-              matches.push(match);
-              matchIds.push(match.id);
+          axios.all(linksArr.map(url => axios.get(url,config)))
+          .then(axios.spread(function (...result) {
+            // all requests are now complete
+            var data = [];
+            for(i in result){
+              data.push.apply(data, result[i].data.matches);
             }
-          }
 
+            //Sort matches by date ascending
+            data.sort(function(a,b){
+              return new Date(a.utcDate) - new Date(b.utcDate);
+            });
+
+            var matches = [];
+            var matchIds = [];
+            for(i in data){
+              var datetime = new Date(data[i].utcDate);
+              var date = datetime.toISOString().split('T')[0];
+              var time = datetime.toISOString().split('T')[1];
+              time = time.split(':')[0] + ':' + time.split(':')[1];
+              var match = {
+                'id': data[i].id,
+                'date': date,
+                'time': time,
+                'home_team': data[i].homeTeam.name,
+                'away_team': data[i].awayTeam.name
+              };
+              if(matchIds.indexOf(match.id) < 0){ // avoid duplicates if user team has 2 teams that will play each other
+                matches.push(match);
+                matchIds.push(match.id);
+              }
+            }
+
+            client.close();
+            res.status(200).json(matches);
+          }));
+        } else{
           client.close();
-          res.status(200).json(matches);
-        }));
-      } else{
-        client.close();
-        res.status(200).json([]);
+          res.status(200).json([]);
+        }
       }
 
     });

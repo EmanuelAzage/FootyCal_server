@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "forever start app.js; ./node_modules/jest/bin/jest.js; forever stop app.js"
+    "test": "forever start app.js; ./node_modules/jest/bin/jest.js; forever stop app.js; node scripts/remove_test_user.js"
   },
   "keywords": [
     "node",
