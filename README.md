@@ -5,4 +5,4 @@
 
 ## Database Schema
 
-![alt text](https://github.com/EmanuelAzage/blob/master/db_schema.jpg "Database Schema")
+![alt text](https://github.com/EmanuelAzage/FootyCal_server/blob/master/db_schema.JPG "Database Schema")
